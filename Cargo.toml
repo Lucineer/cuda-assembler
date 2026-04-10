@@ -1,0 +1,7 @@
+[package]
+name = "cuda-assembler"
+version = "0.1.0"
+edition = "2021"
+description = "Text-to-bytecode assembler for agent instruction sets with confidence encoding"
+
+[dependencies]
