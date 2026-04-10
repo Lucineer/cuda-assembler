@@ -2,6 +2,12 @@
 name = "cuda-assembler"
 version = "0.1.0"
 edition = "2021"
-description = "Text-to-bytecode assembler for agent instruction sets with confidence encoding"
+description = "Two-pass text-to-bytecode assembler with labels, data directives, disassembler"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Lucineer/cuda-assembler"
+readme = "README.md"
+keywords = ["ai", "fleet", "agent", "rust"]
+categories = ["science"]
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
