@@ -1,40 +1,82 @@
 # cuda-assembler
 
-**Two-pass text-to-bytecode assembler for the FLUX instruction set.**
+Text-to-bytecode assembler for agent instruction sets — labels, data, confidence, biological ops (Rust)
 
-> Human-readable instructions in, machine-executable bytecode out.
+Part of the Cocapn fleet — a Lucineer vessel component.
 
 ## What It Does
 
-Compiles text assembly into FLUX VM bytecode (used by flux-runtime-c):
+### Key Types
+
+- `Assembler` — core data structure
+
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/Lucineer/cuda-assembler.git
+cd cuda-assembler
+
+# Build
+cargo build
+
+# Run tests
+cargo test
+```
+
+## Usage
+
+```rust
+use cuda_assembler::*;
+
+// See src/lib.rs for full API
+// 15 unit tests included
+```
+
+### Available Implementations
+
+- `Op` — see source for methods
+- `fmt::Display for AsmError` — see source for methods
+- `Assembler` — see source for methods
+
+## Testing
+
+```bash
+cargo test
+```
+
+15 unit tests covering core functionality.
+
+## Architecture
+
+This crate is part of the **Cocapn Fleet** — a git-native multi-agent ecosystem.
+
+- **Category**: other
+- **Language**: Rust
+- **Dependencies**: See `Cargo.toml`
+- **Status**: Active development
+
+## Related Crates
+
+
+## Fleet Position
 
 ```
-# Text assembly
-LOAD r1, 42       ; Load immediate
-ADD  r2, r1, r3   ; Add registers
-JZ   r2, end      ; Jump if zero
-TELL "hello"      ; Output message
-end: HALT          ; Stop
+Casey (Captain)
+├── JetsonClaw1 (Lucineer realm — hardware, low-level systems, fleet infrastructure)
+├── Oracle1 (SuperInstance — lighthouse, architecture, consensus)
+└── Babel (SuperInstance — multilingual scout)
 ```
 
-## Features
+## Contributing
 
-- **Two-pass assembly**: First pass collects labels, second pass emits bytes
-- **60+ opcodes**: All FLUX opcodes including instinct and energy operations
-- **Labels**: Named jump targets (`end:`, `loop:`)
-- **Data directives**: Inline data embedding
-- **Comments**: `;` line comments
-- **Disassembler**: Bytecode back to text for debugging
-- **Error reporting**: Line numbers and meaningful messages
-
-## Ecosystem Integration
-
-- [flux-runtime-c](https://github.com/Lucineer/flux-runtime-c) -- C VM that executes the bytecode
-- [cuda-instruction-set](https://github.com/Lucineer/cuda-instruction-set) -- Rust opcode definitions
-- [cuda-biology](https://github.com/Lucineer/cuda-biology) -- Generates instinct-based bytecode
-- [cuda-genepool](https://github.com/Lucineer/cuda-genepool) -- Protein compilation to bytecode
-- [cuda-forth](https://github.com/Lucineer/cuda-forth) -- Alternative: Forth-style compilation
+This is a fleet vessel component. Fork it, improve it, push a bottle to `message-in-a-bottle/for-jetsonclaw1/`.
 
 ## License
 
-MIT OR Apache-2.0
+MIT
+
+---
+
+*Built by JetsonClaw1 — part of the Cocapn fleet*
+*See [cocapn-fleet-readme](https://github.com/Lucineer/cocapn-fleet-readme) for the full fleet roadmap*
