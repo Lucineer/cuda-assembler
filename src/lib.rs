@@ -6,8 +6,8 @@ Text-to-bytecode assembler for agent instruction sets.
 Supports: labels, comments, data directives, confidence annotations,
 and the full 80-opcode agent instruction set from cuda-instruction-set.
 
-Usage:
-```
+Usage (pseudocode, not Rust):
+```text
   MOVI R0, 42        ; R0 = 42
   CONF R0, 0.95      ; R0 confidence = 0.95
   LABEL start:
