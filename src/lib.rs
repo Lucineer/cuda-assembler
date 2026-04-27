@@ -286,10 +286,10 @@ impl Assembler {
             parse_reg(parts[idx]).unwrap_or_else(|| { errs.push(AsmError::BadRegister(parts[idx].to_string())); 0 })
         };
 
-        let get_imm = |idx: usize, errs: &mut Vec<AsmError>| -> i16 {
+        let _get_imm = |idx: usize, errs: &mut Vec<AsmError>| -> i16 {
             if idx >= parts.len() { errs.push(AsmError::BadImmediate("missing".into())); return 0; }
             // Try as label first
-            if let Some(&addr) = self.labels.get(parts[idx]) {
+            if let Some(_addr) = self.labels.get(parts[idx]) {
                 // Will be patched later — for now store 0
                 return 0;
             }
@@ -302,7 +302,7 @@ impl Assembler {
             })
         };
 
-        let get_imm_from_label = |idx: usize, errs: &mut Vec<AsmError>, labels: &HashMap<String,usize>, data_len: usize| -> i16 {
+        let _get_imm_from_label = |idx: usize, _errs: &mut Vec<AsmError>, labels: &HashMap<String,usize>, data_len: usize| -> i16 {
             if idx >= parts.len() { return 0; }
             let s = parts[idx].trim_end_matches(',');
             if let Some(&addr) = labels.get(s) {
