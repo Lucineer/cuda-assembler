@@ -129,7 +129,7 @@ impl Op {
 
 /// Register name to index
 fn parse_reg(s: &str) -> Option<u8> {
-    let s = s.trim();
+    let s = s.trim().trim_end_matches(',');
     if s.starts_with('R') || s.starts_with('r') {
         s[1..].parse::<u8>().ok().filter(|&r| r <= 15)
     } else {
@@ -181,8 +181,13 @@ impl Assembler {
             let line = line.split(';').next().unwrap_or("").trim();
             if line.is_empty() { continue; }
             if line.to_uppercase().starts_with("LABEL ") || line.ends_with(':') {
-                let name = if line.ends_with(':') { &line[..line.len()-1] } else { &line[6..] };
-                let name = name.trim();
+                // Handle both "LABEL foo:" and "foo:" formats
+                let upper = line.to_uppercase();
+                let name = if upper.starts_with("LABEL ") {
+                    line[6..].trim().trim_end_matches(':').trim()
+                } else {
+                    line.trim_end_matches(':').trim()
+                };
                 if self.labels.contains_key(name) {
                     errors.push(AsmError::DuplicateLabel(name.to_string()));
                 }
@@ -230,10 +235,10 @@ impl Assembler {
         };
         match op {
             // No operands: 1 byte
-            Op::Nop | Op::Halt | Op::Ret | Op::Yield => 1,
+            Op::Nop | Op::Halt | Op::Ret | Op::Yield | Op::Swap => 1,
             // Single register: 2 bytes (op + rd)
             Op::CInc | Op::CDec | Op::CNeg | Op::CAbs | Op::Not |
-            Op::Push | Op::Pop | Op::Dup | Op::Swap |
+            Op::Push | Op::Pop | Op::Dup |
             Op::InstinctQ | Op::AtpQ | Op::CircadianGet |
             Op::ApoptosisChk | Op::ApoptosisTrigger | Op::Debug => 2,
             // Two registers: 3 bytes (op + rd + rs1)
@@ -297,12 +302,12 @@ impl Assembler {
             })
         };
 
-        let get_imm_from_label = |idx: usize, errs: &mut Vec<AsmError>, labels: &HashMap<String,usize>| -> i16 {
+        let get_imm_from_label = |idx: usize, errs: &mut Vec<AsmError>, labels: &HashMap<String,usize>, data_len: usize| -> i16 {
             if idx >= parts.len() { return 0; }
             let s = parts[idx].trim_end_matches(',');
             if let Some(&addr) = labels.get(s) {
                 // offset from current PC (after this instruction)
-                let instr_end = self.data.len() + 4; // jumps are 4 bytes
+                let instr_end = data_len + 4; // jumps are 4 bytes
                 let offset = addr as isize - instr_end as isize;
                 return offset as i16;
             }
@@ -311,13 +316,14 @@ impl Assembler {
                 else { 0 }
             })
         };
+        let labels_clone = self.labels.clone();
 
         self.data.push(op as u8);
 
         match op {
-            Op::Nop | Op::Halt | Op::Ret | Op::Yield => {}
+            Op::Nop | Op::Halt | Op::Ret | Op::Yield | Op::Swap => {}
             Op::CInc | Op::CDec | Op::CNeg | Op::CAbs | Op::Not |
-            Op::Push | Op::Pop | Op::Dup | Op::Swap | Op::MFree |
+            Op::Push | Op::Pop | Op::Dup | Op::MFree |
             Op::InstinctQ | Op::AtpQ | Op::CircadianGet |
             Op::ApoptosisChk | Op::ApoptosisTrigger | Op::Debug => {
                 self.data.push(get_reg(1, errors));
@@ -338,19 +344,19 @@ impl Assembler {
             }
             Op::MovI | Op::AddI | Op::MAlloc | Op::Drop => {
                 self.data.push(get_reg(1, errors));
-                let imm = get_imm_from_label(2, errors, &self.labels);
+                let imm = get_imm_from_label(2, errors, &labels_clone, self.data.len());
                 self.data.push((imm & 0xFF) as u8);
                 self.data.push(((imm >> 8) & 0xFF) as u8);
             }
             Op::Jz | Op::Jnz | Op::Je | Op::Jne => {
                 self.data.push(get_reg(1, errors));
-                let imm = get_imm_from_label(2, errors, &self.labels);
+                let imm = get_imm_from_label(2, errors, &labels_clone, self.data.len());
                 self.data.push((imm & 0xFF) as u8);
                 self.data.push(((imm >> 8) & 0xFF) as u8);
             }
             Op::Jmp | Op::Call => {
                 self.data.push(0); // flags/unused
-                let imm = get_imm_from_label(1, errors, &self.labels);
+                let imm = get_imm_from_label(1, errors, &labels_clone, self.data.len());
                 self.data.push((imm & 0xFF) as u8);
                 self.data.push(((imm >> 8) & 0xFF) as u8);
             }
@@ -360,7 +366,7 @@ impl Assembler {
                 self.data.push(0); self.data.push(0); // len
             }
             Op::SysCall => {
-                let n = get_imm_from_label(1, errors, &self.labels);
+                let n = get_imm_from_label(1, errors, &labels_clone, self.data.len());
                 self.data.push(n as u8);
                 self.data.push(0);
             }
@@ -485,7 +491,7 @@ mod tests {
     #[test]
     fn test_confidence_ops() {
         let mut asm = Assembler::new();
-        let src = "CONF R0, 95\nFUSE R0, R1\nTRUST R0, R1";
+        let src = "CONF R0, R1\nFUSE R0, R1\nTRUST R0, R1";
         let bc = asm.assemble(src).unwrap();
         assert_eq!(bc[0], Op::Conf as u8);
         assert_eq!(bc[3], Op::Fuse as u8);
@@ -556,7 +562,7 @@ mod tests {
         let src = "PUSH R0\nPUSH R1\nSWAP\nPOP R0";
         let bc = asm.assemble(src).unwrap();
         assert_eq!(bc[0], 0x40); // PUSH
-        assert_eq!(bc[2], 0x40);
+        assert_eq!(bc[2], 0x40); // PUSH
         assert_eq!(bc[4], 0x43); // SWAP
         assert_eq!(bc[5], 0x41); // POP
     }
