@@ -274,6 +274,7 @@ impl Assembler {
         }
     }
 
+    #[allow(unused_variables)]
     fn emit_instruction(&mut self, line: &str, errors: &mut Vec<AsmError>) {
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.is_empty() { return; }
